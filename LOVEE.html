@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meri Pyari Taibu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Parisienne&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ivory:#FBF7EF;
+    --ivory-deep:#F3EBDB;
+    --navy:#1F2A44;
+    --navy-soft:#33415E;
+    --blue-rose:#7385B3;
+    --blue-rose-deep:#4C5D89;
+    --white-rose:#FFFDF9;
+    --white-rose-shadow:#E9DFCB;
+    --dandelion:#E8B84B;
+    --dandelion-deep:#C9962E;
+    --sage:#8A9B7E;
+    --sage-deep:#657357;
+    --ink:#2C2A26;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html,body{
+    margin:0;
+    padding:0;
+    min-height:100%;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(115,133,179,0.10), transparent 55%),
+      radial-gradient(ellipse at 85% 85%, rgba(232,184,75,0.10), transparent 50%),
+      var(--ivory);
+    font-family: 'EB Garamond', serif;
+    color: var(--ink);
+    overflow-x:hidden;
+  }
+
+  .stage{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    padding: 32px 18px;
+  }
+
+  /* ---------- ambient background flowers ---------- */
+  .ambient{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:0;
+  }
+  .ambient svg{
+    position:absolute;
+    opacity:0.5;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.03));
+    animation: drift 14s ease-in-out infinite;
+  }
+  @keyframes drift{
+    0%,100%{ transform: translateY(0) rotate(var(--r,0deg)); }
+    50%{ transform: translateY(-10px) rotate(calc(var(--r,0deg) + 2deg)); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .ambient svg{ animation: none; }
+  }
+
+  /* =========================================================
+     ENVELOPE
+     ========================================================= */
+  .envelope-wrap{
+    position:relative;
+    z-index:2;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:22px;
+    transition: opacity .6s ease, transform .6s ease;
+  }
+  .envelope-wrap.hidden{
+    opacity:0;
+    transform: scale(.92);
+    pointer-events:none;
+    position:absolute;
+  }
+
+  .envelope-title{
+    font-family:'Parisienne', cursive;
+    font-size: clamp(28px, 6vw, 42px);
+    color: var(--navy);
+    text-align:center;
+    letter-spacing:.5px;
+  }
+
+  .envelope{
+    --w: 300px;
+    --h: 200px;
+    position:relative;
+    width: var(--w);
+    height: var(--h);
+    cursor:pointer;
+    perspective: 1200px;
+  }
+  @media (min-width:520px){
+    .envelope{ --w: 360px; --h: 240px; }
+  }
+
+  .env-body{
+    position:absolute;
+    inset:0;
+    background: linear-gradient(180deg, var(--ivory-deep), var(--ivory));
+    border: 1px solid rgba(31,42,68,0.15);
+    border-radius: 3px;
+    box-shadow: 0 18px 40px -18px rgba(31,42,68,0.35), 0 2px 6px rgba(31,42,68,0.08);
+  }
+  /* pocket triangles suggesting the envelope fold lines */
+  .env-body::before,
+  .env-body::after{
+    content:"";
+    position:absolute;
+    bottom:0;
+    width:0;
+    height:0;
+    border-style:solid;
+  }
+  .env-body::before{
+    left:0;
+    border-width: 0 0 calc(var(--h) - 2px) calc(var(--w) / 2 - 1px);
+    border-color: transparent transparent rgba(31,42,68,0.06) transparent;
+  }
+  .env-body::after{
+    right:0;
+    border-width: 0 calc(var(--w) / 2 - 1px) calc(var(--h) - 2px) 0;
+    border-color: transparent transparent rgba(31,42,68,0.06) transparent;
+  }
+
+  .env-flap{
+    position:absolute;
+    top:0; left:0;
+    width:100%;
+    height:0;
+    border-left: calc(var(--w) / 2) solid transparent;
+    border-right: calc(var(--w) / 2) solid transparent;
+    border-top: calc(var(--h) * 0.62) solid var(--navy-soft);
+    transform-origin: top center;
+    transition: transform 1.1s cubic-bezier(.6,.05,.2,1);
+    z-index:3;
+    filter: drop-shadow(0 6px 10px rgba(31,42,68,0.18));
+  }
+  .envelope.open .env-flap{
+    transform: rotateX(180deg);
+    z-index:1;
+  }
+
+  .env-seal{
+    position:absolute;
+    top: calc(var(--h) * 0.50);
+    left:50%;
+    width:46px;
+    height:46px;
+    transform: translate(-50%,-50%);
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, var(--dandelion), var(--dandelion-deep));
+    box-shadow: 0 4px 10px rgba(201,150,46,0.45), inset 0 0 0 2px rgba(255,255,255,0.25);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:4;
+    transition: opacity .4s ease, transform .4s ease;
+  }
+  .envelope.open .env-seal{
+    opacity:0;
+    transform: translate(-50%,-50%) scale(.6);
+  }
+  .env-seal svg{ width:24px; height:24px; }
+
+  .env-letter{
+    position:absolute;
+    left: 6%;
+    right:6%;
+    top: 10%;
+    height: 82%;
+    background: var(--white-rose);
+    border: 1px solid rgba(31,42,68,0.10);
+    border-radius:2px;
+    box-shadow: 0 6px 18px rgba(31,42,68,0.12);
+    transform: translateY(6%);
+    transition: transform 1s cubic-bezier(.2,.7,.3,1) .35s;
+    z-index:2;
+  }
+  .envelope.open .env-letter{
+    transform: translateY(-46%);
+  }
+  .env-letter::before{
+    content:"";
+    position:absolute;
+    left:14%; right:14%; top:22%;
+    height:1px;
+    background: rgba(31,42,68,0.10);
+    box-shadow: 0 10px 0 rgba(31,42,68,0.08), 0 20px 0 rgba(31,42,68,0.06);
+  }
+
+  .envelope-hint{
+    font-family:'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 16px;
+    letter-spacing: .04em;
+    color: var(--navy-soft);
+    opacity: .8;
+  }
+
+  /* =========================================================
+     LETTER VIEW
+     ========================================================= */
+  .letter-wrap{
+    position:relative;
+    z-index:2;
+    width:100%;
+    max-width: 880px;
+    opacity:0;
+    transform: translateY(18px);
+    transition: opacity .8s ease .2s, transform .8s ease .2s;
+    pointer-events:none;
+  }
+  .letter-wrap.visible{
+    opacity:1;
+    transform:none;
+    pointer-events:auto;
+  }
+
+  .letter-frame{
+    position:relative;
+    display:flex;
+    background: var(--white-rose);
+    border-radius:6px;
+    box-shadow: 0 30px 70px -30px rgba(31,42,68,0.35), 0 6px 16px rgba(31,42,68,0.08);
+    overflow:hidden;
+    border: 1px solid rgba(31,42,68,0.08);
+  }
+
+  .vine-rail{
+    flex: 0 0 76px;
+    position:relative;
+    background: linear-gradient(180deg, var(--ivory-deep), var(--white-rose-shadow));
+    overflow:hidden;
+  }
+  .vine-rail svg{ position:absolute; top:0; left:0; height:100%; width:100%; }
+
+  @media (max-width: 620px){
+    .letter-frame{ flex-direction:column; }
+    .vine-rail{
+      flex: 0 0 56px;
+      width:100%;
+    }
+  }
+
+  .letter-body{
+    flex:1;
+    padding: 44px 38px 40px;
+    max-height: 78vh;
+    overflow-y:auto;
+  }
+  @media (max-width:620px){
+    .letter-body{ padding: 30px 22px 32px; max-height:none; }
+  }
+
+  .letter-body::-webkit-scrollbar{ width:8px; }
+  .letter-body::-webkit-scrollbar-thumb{
+    background: var(--white-rose-shadow);
+    border-radius: 8px;
+  }
+  .letter-body::-webkit-scrollbar-track{ background: transparent; }
+
+  .letter-heading{
+    font-family:'Parisienne', cursive;
+    font-size: clamp(30px, 5vw, 44px);
+    color: var(--navy);
+    margin: 0 0 6px;
+    line-height:1.1;
+  }
+  .letter-sub{
+    font-family:'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size:15px;
+    color: var(--sage-deep);
+    letter-spacing:.06em;
+    margin: 0 0 30px;
+  }
+
+  .letter-body p{
+    font-size: 18px;
+    line-height: 1.85;
+    margin: 0 0 22px;
+    color: var(--ink);
+  }
+  .letter-body p:first-of-type::first-letter{
+    font-family:'Parisienne', cursive;
+    font-size: 52px;
+    color: var(--blue-rose-deep);
+    float:left;
+    line-height:.75;
+    padding-right:10px;
+    padding-top:6px;
+  }
+
+  .letter-signoff{
+    margin-top: 8px;
+    text-align:right;
+  }
+  .letter-signoff .sign{
+    font-family:'Parisienne', cursive;
+    font-size: 34px;
+    color: var(--blue-rose-deep);
+  }
+
+  .letter-actions{
+    margin-top: 34px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(31,42,68,0.08);
+    text-align:center;
+  }
+  .letter-actions button{
+    background:none;
+    border:none;
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic;
+    font-size:15px;
+    color: var(--sage-deep);
+    letter-spacing:.05em;
+    cursor:pointer;
+    opacity:.75;
+    transition: opacity .2s ease;
+  }
+  .letter-actions button:hover{ opacity:1; }
+  .letter-actions button:focus-visible,
+  .envelope:focus-visible{
+    outline: 2px solid var(--blue-rose-deep);
+    outline-offset: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient" aria-hidden="true" id="ambient"></div>
+
+<div class="stage">
+
+  <!-- ============ ENVELOPE VIEW ============ -->
+  <div class="envelope-wrap" id="envelopeWrap">
+    <div class="envelope-title">Meri Pyari Taibu</div>
+    <div class="envelope" id="envelope" tabindex="0" role="button" aria-label="Open the letter">
+      <div class="env-letter"></div>
+      <div class="env-body"></div>
+      <div class="env-flap"></div>
+      <div class="env-seal">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3c1.2 2 1.2 3.6 0 5-1.2-1.4-1.2-3 0-5Z" fill="#fff" opacity=".9"/><circle cx="12" cy="13" r="4.2" fill="#fff" opacity=".9"/><path d="M8 13c0-2.5 1.8-4.2 4-4.2s4 1.7 4 4.2-1.8 4.2-4 4.2-4-1.7-4-4.2Z" fill="none" stroke="#fff" stroke-width=".6" opacity=".6"/></svg>
+      </div>
+    </div>
+    <div class="envelope-hint">— tap the seal to open —</div>
+  </div>
+
+  <!-- ============ LETTER VIEW ============ -->
+  <div class="letter-wrap" id="letterWrap">
+    <div class="letter-frame">
+      <div class="vine-rail" id="vineRail"></div>
+      <div class="letter-body">
+        <h1 class="letter-heading">Meri Pyari Taibu</h1>
+        <p class="letter-sub">for Jasmine, from Hisam</p>
+
+        <p>I know you are a bit sad, and you must be feeling this way after what happened to you yesterday, especially with your mom and how she reacted. It must have felt like she didn't trust you enough when she asked to see your phone, and that feeling of distrust from someone like a mother, who we trust the most in this world, can make our hearts feel awful and heavy. I might be wrong about this, and it may be something else, but either way I hope you were able to talk to her again, I wanted to make you feel heard. It's the least I can do for you, along with other things that have been on my mind and heart for quite some time, my Taibu.</p>
+
+        <p>Sometimes you might wonder why I told my family, and I realize that because of me, you changed a lot in your life when you didn't need to, as your mom will never see you the same way again, and there will be a weird energy for a while. In our culture, as much freedom as boys have in these matters, girls have a bit less, whether we accept it or not, and I understand that. And somewhere along the way, you compromised your peace of mind by accepting me into your life, and even more so by telling your mom about me this early. I'm glad you felt comfortable enough to share our relationship with your mom and stand by me, especially when you knew they would never expect anything like this from you. Doing this is no small thing, so whether anyone understands you or not, I understand you, and how strong you are as a person in every way.</p>
+
+        <p>I love you for how clear you've always been, you never left me guessing, and you gave me such clarity that it felt easy. I guess that's what it's supposed to feel like to love someone. And the way you never let this relationship be affected by outside circumstances, every single time you go through something, you still put in the effort to keep this going, it puts a smile on my face every time and shows how emotionally intelligent you are. It shows me clearly how serious you are about us. A lot of times I feel like I've fallen behind in leading you the way I should as a responsible partner. I feel terrible about the times I failed to lead and protect you the way I could have. Sometimes I reacted emotionally and made you feel sad. I never felt at peace after those arguments, they never felt worth it, even when my arguments felt logical or reasonable to me. I always felt awful afterward, realizing I was expecting you to think the way I do. So I'm sorry for those moments.</p>
+
+        <p>I've learned not to ask anything for myself, except to make dua that I become capable of holding you in the future, and that I'm given the strength to withstand whatever life throws at me, so that I never hurt you, my Jasmine, and that one day we become people our kids will look up to.</p>
+
+        <p>Before going to sleep, I was feeling a bit uncertain about what I could do to support you emotionally in situations like yesterday, when I'm away from you, and I thought of writing this letter for you. I know I've written similar ones before, but today I wanted to express my gratitude for having you in my life. You made me believe that love doesn't have to be conditional. All my life, I've felt loved for what I've done and how I've performed. I can never say my parents didn't love me, they did, they did what they knew... so I can never blame them, and I'm always grateful for my family. Although my mum knows me more than anyone and has loved me, you're someone who made me feel worthy of empathy without any condition. You gave me your affection and love when you didn't have to, and that made me rethink a lot about life.</p>
+
+        <p>There are always times when I'm surrounded by family, friends, and siblings, but still feel unheard and unseen, regardless of the sleepless nights and things I gave up to man up and get my family out of the hole we were in, at a time similarly aged guys were playing games. I'm grateful for that, and I don't expect anything in return from my family, but sometimes I'm only human, and the least I hope for is some genuine affection or appreciation for what I'm doing — not saying they aren't grateful, but they never try to ask or know what's happening with me, how I'm feeling. But it's okay, I don't need it to get by. I've never received gifts or expressions of love from anyone before, and I don't need them either — for others. You are enough for me, so thank you for every single gift you've given me. Out of all of them, I love you the most, my love. Feeling loved, or expressing myself, was so unfamiliar that it used to feel strange to me, I used to say it's silly, haha, but you changed that and gave me a new perspective. And my love, I know these letters are never enough to show what's in my heart, which beats for you and only you, but I'm doing what I can. I hope this made you feel loved, even for a second, and I hope you felt the warmth of my heart and my intentions toward you. I'm trying to make the theme a bit more to your liking as well, with the blue rose and jasmine, I hope you like it.</p>
+
+        <p>And holy smokes, that was a lot of reading! I could write for days for you, but anyway, love you.</p>
+
+        <div class="letter-signoff">
+          <div class="letter-sub" style="margin-bottom:2px;">your loving,</div>
+          <div class="sign">Hisam</div>
+        </div>
+
+        <div class="letter-actions">
+          <button id="sealBtn" type="button">seal it back up ↺</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============ SVG SYMBOL LIBRARY ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+
+  <radialGradient id="gradBlueRose" cx="35%" cy="30%" r="75%">
+    <stop offset="0%" stop-color="#9AAAD1"/>
+    <stop offset="100%" stop-color="#4C5D89"/>
+  </radialGradient>
+  <radialGradient id="gradWhiteRose" cx="35%" cy="30%" r="75%">
+    <stop offset="0%" stop-color="#FFFEFB"/>
+    <stop offset="100%" stop-color="#E9DFCB"/>
+  </radialGradient>
+  <radialGradient id="gradDandelion" cx="40%" cy="35%" r="70%">
+    <stop offset="0%" stop-color="#F3CE7B"/>
+    <stop offset="100%" stop-color="#C9962E"/>
+  </radialGradient>
+
+  <symbol id="rose-blue" viewBox="-40 -40 80 80">
+    <g>
+      <ellipse cx="0" cy="-14" rx="13" ry="17" fill="url(#gradBlueRose)" transform="rotate(0)"/>
+      <ellipse cx="0" cy="-14" rx="13" ry="17" fill="url(#gradBlueRose)" transform="rotate(72)"/>
+      <ellipse cx="0" cy="-14" rx="13" ry="17" fill="url(#gradBlueRose)" transform="rotate(144)"/>
+      <ellipse cx="0" cy="-14" rx="13" ry="17" fill="url(#gradBlueRose)" transform="rotate(216)"/>
+      <ellipse cx="0" cy="-14" rx="13" ry="17" fill="url(#gradBlueRose)" transform="rotate(288)"/>
+      <circle r="9" fill="url(#gradBlueRose)"/>
+    </g>
+  </symbol>
+
+  <symbol id="rose-white" viewBox="-40 -40 80 80">
+    <g>
+      <ellipse cx="0" cy="-14" rx="13" ry="17" fill="url(#gradWhiteRose)" transform="rotate(0)"/>
+      <ellipse cx="0" cy="-14" rx="13" ry="17" fill="url(#gradWhiteRose)" transform="rotate(72)"/>
+      <ellipse cx="0" cy="-14" rx="13" ry="17" fill="url(#gradWhiteRose)" transform="rotate(144)"/>
+      <ellipse cx="0" cy="-14" rx="13" ry="17" fill="url(#gradWhiteRose)" transform="rotate(216)"/>
+      <ellipse cx="0" cy="-14" rx="13" ry="17" fill="url(#gradWhiteRose)" transform="rotate(288)"/>
+      <circle r="9" fill="url(#gradWhiteRose)"/>
+    </g>
+  </symbol>
+
+  <symbol id="rose-blue-solo" viewBox="-40 -40 80 80">
+    <g>
+      <ellipse cx="0" cy="-14" rx="13" ry="17" fill="url(#gradBlueRose)" transform="rotate(0)"/>
+      <ellipse cx="0" cy="-14" rx="13" ry="17" fill="url(#gradBlueRose)" transform="rotate(72)"/>
+      <ellipse cx="0" cy="-14" rx="13" ry="17" fill="url(#gradBlueRose)" transform="rotate(144)"/>
+      <ellipse cx="0" cy="-14" rx="13" ry="17" fill="url(#gradBlueRose)" transform="rotate(216)"/>
+      <ellipse cx="0" cy="-14" rx="13" ry="17" fill="url(#gradBlueRose)" transform="rotate(288)"/>
+      <circle r="9" fill="url(#gradBlueRose)"/>
+    </g>
+  </symbol>
+
+  <!-- jasmine: 5 small white petals with gold center -->
+  <symbol id="jasmine" viewBox="-16 -16 32 32">
+    <g>
+      <ellipse cx="0" cy="-7" rx="4.6" ry="7" fill="#FFFDF9" transform="rotate(0)"/>
+      <ellipse cx="0" cy="-7" rx="4.6" ry="7" fill="#FFFDF9" transform="rotate(72)"/>
+      <ellipse cx="0" cy="-7" rx="4.6" ry="7" fill="#FFFDF9" transform="rotate(144)"/>
+      <ellipse cx="0" cy="-7" rx="4.6" ry="7" fill="#FFFDF9" transform="rotate(216)"/>
+      <ellipse cx="0" cy="-7" rx="4.6" ry="7" fill="#FFFDF9" transform="rotate(288)"/>
+      <circle r="2.6" fill="url(#gradDandelion)"/>
+    </g>
+  </symbol>
+
+  <!-- dandelion seed head -->
+  <symbol id="dandelion" viewBox="-20 -20 40 40">
+    <g stroke="#C9962E" stroke-width="0.6" opacity="0.85">
+      <line x1="0" y1="0" x2="0" y2="-16"/>
+      <line x1="0" y1="0" x2="11" y2="-11"/>
+      <line x1="0" y1="0" x2="16" y2="0"/>
+      <line x1="0" y1="0" x2="11" y2="11"/>
+      <line x1="0" y1="0" x2="0" y2="16"/>
+      <line x1="0" y1="0" x2="-11" y2="11"/>
+      <line x1="0" y1="0" x2="-16" y2="0"/>
+      <line x1="0" y1="0" x2="-11" y2="-11"/>
+    </g>
+    <g fill="url(#gradDandelion)">
+      <circle cx="0" cy="-16" r="2.2"/>
+      <circle cx="11" cy="-11" r="2.2"/>
+      <circle cx="16" cy="0" r="2.2"/>
+      <circle cx="11" cy="11" r="2.2"/>
+      <circle cx="0" cy="16" r="2.2"/>
+      <circle cx="-11" cy="11" r="2.2"/>
+      <circle cx="-16" cy="0" r="2.2"/>
+      <circle cx="-11" cy="-11" r="2.2"/>
+    </g>
+    <circle r="4.5" fill="url(#gradDandelion)"/>
+  </symbol>
+
+  <!-- leaf -->
+  <symbol id="leaf" viewBox="-12 -18 24 36">
+    <path d="M0 -18 C 9 -10, 9 8, 0 18 C -9 8, -9 -10, 0 -18 Z" fill="#8A9B7E"/>
+    <line x1="0" y1="-16" x2="0" y2="16" stroke="#657357" stroke-width="0.6" opacity=".6"/>
+  </symbol>
+
+</defs>
+</svg>
+
+<script>
+(function(){
+  var envelope = document.getElementById('envelope');
+  var envelopeWrap = document.getElementById('envelopeWrap');
+  var letterWrap = document.getElementById('letterWrap');
+  var sealBtn = document.getElementById('sealBtn');
+
+  function openLetter(){
+    envelope.classList.add('open');
+    setTimeout(function(){
+      envelopeWrap.classList.add('hidden');
+      letterWrap.classList.add('visible');
+    }, 650);
+  }
+
+  function closeLetter(){
+    letterWrap.classList.remove('visible');
+    envelopeWrap.classList.remove('hidden');
+    envelope.classList.remove('open');
+  }
+
+  envelope.addEventListener('click', openLetter);
+  envelope.addEventListener('keydown', function(e){
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openLetter(); }
+  });
+  sealBtn.addEventListener('click', closeLetter);
+
+  /* ---------- build the vine rail ---------- */
+  var rail = document.getElementById('vineRail');
+  var vineSVG =
+    '<svg viewBox="0 0 100 900" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M50 0 C 20 90, 80 180, 50 270 S 20 450, 50 540 S 80 720, 50 810 L 50 900" ' +
+        'fill="none" stroke="#8A9B7E" stroke-width="2" opacity="0.55"/>' +
+      '<use href="#leaf" width="26" height="40" x="30" y="40" transform="rotate(-20 43 60)"/>' +
+      '<use href="#rose-blue" width="46" height="46" x="27" y="70"/>' +
+      '<use href="#leaf" width="22" height="34" x="55" y="150" transform="rotate(25 66 167)"/>' +
+      '<use href="#jasmine" width="26" height="26" x="30" y="190"/>' +
+      '<use href="#jasmine" width="20" height="20" x="55" y="215"/>' +
+      '<use href="#rose-white" width="44" height="44" x="26" y="255"/>' +
+      '<use href="#leaf" width="24" height="36" x="15" y="330" transform="rotate(-15 27 348)"/>' +
+      '<use href="#dandelion" width="40" height="40" x="30" y="360"/>' +
+      '<use href="#jasmine" width="22" height="22" x="58" y="410"/>' +
+      '<use href="#rose-blue" width="46" height="46" x="27" y="450"/>' +
+      '<use href="#leaf" width="22" height="34" x="55" y="530" transform="rotate(20 66 547)"/>' +
+      '<use href="#jasmine" width="24" height="24" x="30" y="560"/>' +
+      '<use href="#rose-white" width="42" height="42" x="28" y="600"/>' +
+      '<use href="#dandelion" width="36" height="36" x="32" y="670"/>' +
+      '<use href="#jasmine" width="20" height="20" x="58" y="700"/>' +
+      '<use href="#leaf" width="22" height="34" x="15" y="740" transform="rotate(-25 26 757)"/>' +
+      '<use href="#rose-blue" width="42" height="42" x="29" y="770"/>' +
+      '<use href="#jasmine" width="20" height="20" x="55" y="830"/>' +
+    '</svg>';
+  rail.innerHTML = vineSVG;
+
+  /* ---------- ambient scattered background flowers ---------- */
+  var ambient = document.getElementById('ambient');
+  var placements = [
+    {sym:'rose-blue', top:'8%',  left:'6%',  size:60, rot:-8,  delay:0},
+    {sym:'jasmine',   top:'14%', left:'14%', size:26, rot:10,  delay:1.2},
+    {sym:'dandelion', top:'80%', left:'9%',  size:50, rot:6,   delay:.6},
+    {sym:'rose-white',top:'85%', left:'20%', size:44, rot:-4,  delay:2},
+    {sym:'jasmine',   top:'6%',  left:'88%', size:24, rot:-14, delay:.9},
+    {sym:'rose-blue', top:'18%', left:'92%', size:52, rot:10,  delay:1.6},
+    {sym:'dandelion', top:'82%', left:'90%', size:42, rot:-10, delay:.3},
+    {sym:'rose-white',top:'88%', left:'80%', size:36, rot:8,   delay:1.9},
+    {sym:'jasmine',   top:'92%', left:'50%', size:20, rot:0,   delay:1.1}
+  ];
+  placements.forEach(function(p, i){
+    var ns = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(ns,'svg');
+    svg.setAttribute('viewBox','-40 -40 80 80');
+    svg.setAttribute('width', p.size);
+    svg.setAttribute('height', p.size);
+    svg.style.top = p.top;
+    svg.style.left = p.left;
+    svg.style.setProperty('--r', p.rot + 'deg');
+    svg.style.transform = 'rotate(' + p.rot + 'deg)';
+    svg.style.animationDelay = p.delay + 's';
+    var use = document.createElementNS(ns,'use');
+    use.setAttribute('href', '#' + p.sym);
+    svg.appendChild(use);
+    ambient.appendChild(svg);
+  });
+})();
+</script>
+
+</body>
+</html>
